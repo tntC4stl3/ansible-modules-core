@@ -1167,7 +1167,7 @@ class Container(DockerBaseClass):
                 return True
         return False
 
-    def has_different_configuration(self, image):
+    def has_different_configuration(self, image, **kwargs):
         '''
         Diff parameters vs existing container config. Returns tuple: (True | False, List of differences)
         '''
@@ -1247,6 +1247,9 @@ class Container(DockerBaseClass):
             volumes_from=host_config.get('VolumesFrom'),
             volume_driver=host_config.get('VolumeDriver')
         )
+
+        if kwargs.get('ignore_image', False):
+            del config_mapping['image']
 
         differences = []
         for key, value in config_mapping.iteritems():
@@ -1674,9 +1677,10 @@ class ContainerManager(DockerBaseClass):
                 container = new_container
         else:
             # Existing container
-            different, differences = container.has_different_configuration(image)
+            ignore_image = self.parameters.ignore_image
+            different, differences = container.has_different_configuration(image, ignore_image=ignore_image)
             image_different = False
-            if not self.parameters.ignore_image:
+            if not ignore_image:
                 image_different = self._image_is_different(image, container)
             if image_different or different or self.parameters.recreate:
                 self.diff['differences'] = differences
