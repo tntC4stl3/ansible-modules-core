@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: gem
@@ -97,13 +101,21 @@ author:
 
 EXAMPLES = '''
 # Installs version 1.0 of vagrant.
-- gem: name=vagrant version=1.0 state=present
+- gem:
+    name: vagrant
+    version: 1.0
+    state: present
 
 # Installs latest available version of rake.
-- gem: name=rake state=latest
+- gem:
+    name: rake
+    state: latest
 
 # Installs rake version 1.0 from a local gem on disk.
-- gem: name=rake gem_source=/path/to/gems/rake-1.0.gem state=present
+- gem:
+    name: rake
+    gem_source: /path/to/gems/rake-1.0.gem
+    state: present
 '''
 
 import re
@@ -265,4 +277,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

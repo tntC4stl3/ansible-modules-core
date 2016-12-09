@@ -15,6 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: digital_ocean
@@ -141,11 +145,13 @@ EXAMPLES = '''
     region_id: ams2
     image_id: fedora-19-x64
     wait_timeout: 500
-
   register: my_droplet
 
-- debug: msg="ID is {{ my_droplet.droplet.id }}"
-- debug: msg="IP is {{ my_droplet.droplet.ip_address }}"
+- debug:
+    msg: "ID is {{ my_droplet.droplet.id }}"
+
+- debug:
+    msg: "IP is {{ my_droplet.droplet.ip_address }}"
 
 # Ensure a droplet is present
 # If droplet id already exist, will return the droplet details and changed = False

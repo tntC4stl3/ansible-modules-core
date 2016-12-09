@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ec2_facts
@@ -42,10 +46,11 @@ author: "Silviu Dicu (@silviud) <silviudicu@gmail.com>"
 EXAMPLES = '''
 # Conditional example
 - name: Gather facts
-  action: ec2_facts
+  ec2_facts:
 
 - name: Conditional
-  action: debug msg="This instance is a t1.micro"
+  debug:
+    msg: "This instance is a t1.micro"
   when: ansible_ec2_instance_type == "t1.micro"
 '''
 
@@ -182,4 +187,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 
-main()
+if __name__ == '__main__':
+    main()

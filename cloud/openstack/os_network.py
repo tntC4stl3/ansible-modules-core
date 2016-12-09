@@ -25,6 +25,10 @@ except ImportError:
 from distutils.version import StrictVersion
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: os_network
@@ -69,7 +73,7 @@ options:
    provider_network_type:
      description:
         - The type of physical network that maps to this network resource.
-     choices: ['flat', 'vlan', 'vxlan', 'gre']
+     choices: ['flat', 'vlan', 'vxlan', 'gre', 'uplink']
      required: false
      default: None
      version_added: "2.1"
@@ -169,7 +173,7 @@ def main():
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
         provider_network_type=dict(required=False, default=None,
-                                   choices=['flat', 'vlan', 'vxlan', 'gre']),
+                                   choices=['flat', 'vlan', 'vxlan', 'gre', 'uplink']),
         provider_segmentation_id=dict(required=False),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)

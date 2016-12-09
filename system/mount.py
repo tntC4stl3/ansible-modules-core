@@ -30,6 +30,10 @@ from ansible.module_utils.six import iteritems
 import os
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: mount
@@ -90,9 +94,11 @@ options:
     choices: ["present", "absent", "mounted", "unmounted"]
   fstab:
     description:
-      - File to use instead of C(/etc/fstab). You shouldn't use that option
+      - File to use instead of C(/etc/fstab). You shouldn't use this option
         unless you really know what you are doing. This might be useful if
-        you need to configure mountpoints in a chroot environment.
+        you need to configure mountpoints in a chroot environment.  OpenBSD
+        does not allow specifying alternate fstab files with mount so do not
+        use this on OpenBSD with any state that operates on the live filesystem.
     required: false
     default: /etc/fstab (/etc/vfstab on Solaris)
   boot:
@@ -308,6 +314,15 @@ def unset_mount(module, args):
 
     return (args['name'], changed)
 
+def _set_fstab_args(fstab_file):
+    result = []
+    if fstab_file and fstab_file != '/etc/fstab':
+        if get_platform().lower().endswith('bsd'):
+            result.append('-F')
+        else:
+            result.append('-T')
+        result.append(fstab_file)
+    return result
 
 def mount(module, args):
     """Mount up a path or remount if needed."""
@@ -317,13 +332,15 @@ def mount(module, args):
     cmd = [mount_bin]
 
     if ismount(name):
-        cmd += ['-o', 'remount']
+        return remount(module, mount_bin, args)
 
-    if args['fstab'] != '/etc/fstab':
-        if get_platform() == 'FreeBSD':
-            cmd += ['-F', args['fstab']]
-        elif get_platform() == 'Linux':
-            cmd += ['-T', args['fstab']]
+    if get_platform().lower() == 'openbsd':
+        # Use module.params['fstab'] here as args['fstab'] has been set to the
+        # default value.
+        if module.params['fstab'] is not None:
+            module.fail_json(msg='OpenBSD does not support alternate fstab files.  Do not specify the fstab parameter for OpenBSD hosts')
+    else:
+        cmd += _set_fstab_args(args['fstab'])
 
     cmd += [name]
 
@@ -348,6 +365,46 @@ def umount(module, dest):
     else:
         return rc, out+err
 
+def remount(module, mount_bin, args):
+    ''' will try to use -o remount first and fallback to unmount/mount if unsupported'''
+    msg = ''
+    cmd = [mount_bin]
+
+    # multiplatform remount opts
+    if get_platform().lower().endswith('bsd'):
+        cmd += ['-u']
+    else:
+        cmd += ['-o', 'remount' ]
+
+    if get_platform().lower() == 'openbsd':
+        # Use module.params['fstab'] here as args['fstab'] has been set to the
+        # default value.
+        if module.params['fstab'] is not None:
+            module.fail_json(msg='OpenBSD does not support alternate fstab files.  Do not specify the fstab parameter for OpenBSD hosts')
+    else:
+        cmd += _set_fstab_args(args['fstab'])
+    cmd += [ args['name'], ]
+    out = err = ''
+    try:
+        if get_platform().lower().endswith('bsd'):
+            # Note: Forcing BSDs to do umount/mount due to BSD remount not
+            # working as expected (suspect bug in the BSD mount command)
+            # Interested contributor could rework this to use mount options on
+            # the CLI instead of relying on fstab
+            # https://github.com/ansible/ansible-modules-core/issues/5591
+            rc = 1
+        else:
+            rc, out, err = module.run_command(cmd)
+    except:
+        rc = 1
+
+    if rc != 0:
+        msg = out + err
+        if ismount(args['name']):
+            rc, msg = umount(module, args['name'])
+        if rc == 0:
+            rc, msg = mount(module, args)
+    return rc, msg
 
 # Note if we wanted to put this into module_utils we'd have to get permission
 # from @jupeter -- https://github.com/ansible/ansible-modules-core/pull/2923
@@ -369,7 +426,7 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
 
     is_mounted = False
 
-    if get_platform() == 'Linux':
+    if get_platform() == 'Linux' and linux_mounts is not None:
         if src is None:
             # That's for unmounted/absent
             if dest in linux_mounts:
@@ -410,7 +467,7 @@ def get_linux_mounts(module):
     try:
         f = open(mntinfo_file)
     except IOError:
-        module.fail_json(msg="Cannot open file %s" % mntinfo_file)
+        return
 
     lines = map(str.strip, f.readlines())
 
@@ -525,7 +582,7 @@ def main():
         argument_spec=dict(
             boot=dict(default='yes', choices=['yes', 'no']),
             dump=dict(),
-            fstab=dict(default='/etc/fstab'),
+            fstab=dict(default=None),
             fstype=dict(),
             name=dict(required=True, type='path'),
             opts=dict(),
@@ -547,26 +604,32 @@ def main():
     #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
     # linux args:
     #   name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    if get_platform() == 'SunOS':
+    # Note: Do not modify module.params['fstab'] as we need to know if the user
+    # explicitly specified it in mount() and remount()
+    if get_platform().lower() == 'sunos':
         args = dict(
             name=module.params['name'],
             opts='-',
             passno='-',
-            fstab='/etc/vfstab',
+            fstab=module.params['fstab'],
             boot='yes'
         )
+        if args['fstab'] is None:
+            args['fstab'] = '/etc/vfstab'
     else:
         args = dict(
             name=module.params['name'],
             opts='defaults',
             dump='0',
             passno='0',
-            fstab='/etc/fstab'
+            fstab=module.params['fstab']
         )
+        if args['fstab'] is None:
+            args['fstab'] = '/etc/fstab'
 
-    # FreeBSD doesn't have any 'default' so set 'rw' instead
-    if get_platform() == 'FreeBSD':
-        args['opts'] = 'rw'
+        # FreeBSD doesn't have any 'default' so set 'rw' instead
+        if get_platform() == 'FreeBSD':
+            args['opts'] = 'rw'
 
     linux_mounts = []
 
@@ -575,13 +638,15 @@ def main():
     if get_platform() == 'Linux':
         linux_mounts = get_linux_mounts(module)
 
+        if linux_mounts is None:
+            args['warnings'] = (
+                'Cannot open file /proc/self/mountinfo. '
+                'Bind mounts might be misinterpreted.')
+
     # Override defaults with user specified params
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
         if module.params[key] is not None:
             args[key] = module.params[key]
-
-    if get_platform() == 'SunOS' and args['fstab'] == '/etc/fstab':
-        args['fstab'] = '/etc/vfstab'
 
     # If fstab file does not exist, we first need to create it. This mainly
     # happens when fstab option is passed to the module.
@@ -650,8 +715,7 @@ def main():
         elif 'bind' in args.get('opts', []):
             changed = True
 
-            if is_bind_mounted(
-                    module, linux_mounts, name, args['src'], args['fstype']):
+            if is_bind_mounted( module, linux_mounts, name, args['src'], args['fstype']):
                 changed = False
 
             if changed and not module.check_mode:

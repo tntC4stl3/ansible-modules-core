@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: xattr
@@ -63,13 +67,20 @@ author: "Brian Coca (@bcoca)"
 
 EXAMPLES = '''
 # Obtain the extended attributes  of /etc/foo.conf
-- xattr: name=/etc/foo.conf
+- xattr:
+    name: /etc/foo.conf
 
 # Sets the key 'foo' to value 'bar'
-- xattr: path=/etc/foo.conf key=user.foo value=bar
+- xattr:
+    path: /etc/foo.conf
+    key: user.foo
+    value: bar
 
 # Removes the key 'foo'
-- xattr: name=/etc/foo.conf key=user.foo state=absent
+- xattr:
+    name: /etc/foo.conf
+    key: user.foo
+    state: absent
 '''
 
 import operator

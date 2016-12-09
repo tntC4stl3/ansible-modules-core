@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_bgp
@@ -286,8 +290,8 @@ options:
 
 
 EXAMPLES = '''
-# configure a simple asn
-- nxos_bgp:
+- name: Configure a simple ASN
+  nxos_bgp:
       asn: 65535
       vrf: test
       router_id: 1.1.1.1
@@ -757,7 +761,7 @@ def state_present(module, existing, proposed, candidate):
         elif value is False:
             commands.append('no {0}'.format(key))
         elif value == 'default':
-            if key in PARAM_TO_DEFAULT_KEYMAP.keys():
+            if key in PARAM_TO_DEFAULT_KEYMAP:
                 commands.append('{0} {1}'.format(key, PARAM_TO_DEFAULT_KEYMAP[key]))
             elif existing_commands.get(key):
                 existing_value = existing_commands.get(key)

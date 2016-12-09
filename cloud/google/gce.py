@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: gce
@@ -207,8 +211,10 @@ EXAMPLES = '''
         - http-server
         - my-other-tag
       disks:
-        - { 'name' : 'disk-2', 'mode': 'READ_WRITE' }
-        - { 'name' : 'disk-3', 'mode': 'READ_ONLY' }
+        - name: disk-2
+          mode: READ_WRITE
+        - name: disk-3
+          mode: READ_ONLY
       disk_auto_delete: false
       network: foobar-network
       subnetwork: foobar-subnetwork-1
@@ -246,11 +252,18 @@ EXAMPLES = '''
       register: gce
 
     - name: Save host data
-      add_host: hostname={{ item.public_ip }} groupname=gce_instances_ips
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: gce_instances_ips
       with_items: "{{ gce.instance_data }}"
 
     - name: Wait for SSH for instances
-      wait_for: delay=1 host={{ item.public_ip }} port=22 state=started timeout=30
+      wait_for:
+        delay: 1
+        host: "{{ item.public_ip }}"
+        port: 22
+        state: started
+        timeout: 30
       with_items: "{{ gce.instance_data }}"
 
     - name: Configure Hosts
@@ -442,7 +455,7 @@ def create_instances(module, gce, instance_names, number):
     bad_perms = []
     if service_account_permissions:
         for perm in service_account_permissions:
-            if perm not in gce.SA_SCOPES_MAP.keys():
+            if perm not in gce.SA_SCOPES_MAP:
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))

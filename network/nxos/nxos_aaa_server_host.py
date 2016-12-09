@@ -17,6 +17,10 @@
 #
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_aaa_server_host
@@ -88,9 +92,9 @@ EXAMPLES = '''
         address: 1.2.3.4
         acct_port: 2084
         host_timeout: 10
-        host: {{ inventory_hostname }}
-        username: {{ un }}
-        password: {{ pwd }}
+        host: "{{ inventory_hostname }}"
+        username: "{{ un }}"
+        password: "{{ pwd }}"
 
 # Radius Server Host Key Configuration
   - name: "Radius Server Host Key Configuration"
@@ -101,8 +105,8 @@ EXAMPLES = '''
         key: hello
         encrypt_type: 7
         host:  inventory_hostname }}
-        username: {{ un }}
-        password: {{ pwd }}
+        username: "{{ un }}"
+        password: "{{ pwd }}"
 
 # TACACS Server Host Configuration
   - name: "Tacacs Server Host Configuration"

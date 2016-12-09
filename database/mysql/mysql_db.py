@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: mysql_db
@@ -78,18 +82,33 @@ extends_documentation_fragment: mysql
 '''
 
 EXAMPLES = '''
-# Create a new database with name 'bobdata'
-- mysql_db: name=bobdata state=present
+- name: Create a new database with name 'bobdata'
+  mysql_db:
+    name: bobdata
+    state: present
 
 # Copy database dump file to remote host and restore it to database 'my_db'
-- copy: src=dump.sql.bz2 dest=/tmp
-- mysql_db: name=my_db state=import target=/tmp/dump.sql.bz2
+- name: Copy database dump file
+  copy:
+    src: dump.sql.bz2
+    dest: /tmp
+- name: Restore database
+  mysql_db:
+    name: my_db
+    state: import
+    target: /tmp/dump.sql.bz2
 
-# Dumps all databases to hostname.sql
-- mysql_db: state=dump name=all target=/tmp/{{ inventory_hostname }}.sql
+- name: Dump all databases to hostname.sql
+  mysql_db:
+    state: dump
+    name: all
+    target: /tmp/{{ inventory_hostname }}.sql
 
-# Imports file.sql similar to mysql -u <username> -p <password> < hostname.sql
-- mysql_db: state=import name=all target=/tmp/{{ inventory_hostname }}.sql
+- name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/{{ inventory_hostname }}.sql
 '''
 
 import os

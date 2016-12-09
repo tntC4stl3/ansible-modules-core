@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_feature
@@ -41,12 +45,24 @@ options:
 '''
 
 EXAMPLES = '''
-# Ensure lacp is enabled
-- nxos_feature: feature=lacp state=enabled host={{ inventory_hostname }}
-# Ensure ospf is disabled
-- nxos_feature: feature=ospf state=disabled host={{ inventory_hostname }}
-# Ensure vpc is enabled
-- nxos_feature: feature=vpc state=enabled host={{ inventory_hostname }}
+- name: Ensure lacp is enabled
+  nxos_feature:
+    feature: lacp
+    state: enabled
+    host: "{{ inventory_hostname }}"
+
+- name: Ensure ospf is disabled
+  nxos_feature:
+    feature: ospf
+    state: disabled
+    host: "{{ inventory_hostname }}"
+
+- name: Ensure vpc is enabled
+  nxos_feature:
+    feature: vpc
+    state: enabled
+    host: "{{ inventory_hostname }}"
+
 '''
 
 RETURN = '''
@@ -355,7 +371,7 @@ def get_available_features(feature, module):
             if 'enabled' in state:
                 state = 'enabled'
 
-            if feature not in available_features.keys():
+            if feature not in available_features:
                 available_features[feature] = state
             else:
                 if (available_features[feature] == 'disabled' and
@@ -443,7 +459,7 @@ def main():
     state = module.params['state'].lower()
 
     available_features = get_available_features(feature, module)
-    if feature not in available_features.keys():
+    if feature not in available_features:
         module.fail_json(
             msg='Invalid feature name.',
             features_currently_supported=available_features,

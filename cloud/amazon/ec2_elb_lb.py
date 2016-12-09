@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: ec2_elb_lb
@@ -313,8 +317,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
 
 # Create an ELB with load balancer stickiness enabled
 - local_action:
@@ -327,8 +331,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     stickiness:
       type: loadbalancer
       enabled: yes
@@ -345,8 +349,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     stickiness:
       type: application
       enabled: yes
@@ -363,8 +367,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     tags:
       Name: "New ELB"
       stack: "production"
@@ -381,8 +385,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     tags: {}
 """
 

@@ -26,6 +26,10 @@ try:
 except ImportError:
     HAVE_DEPS = False
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: quantum_router_interface
@@ -88,13 +92,15 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Attach tenant1's subnet to the external router
-- quantum_router_interface: state=present login_username=admin
-                            login_password=admin
-                            login_tenant_name=admin
-                            tenant_name=tenant1
-                            router_name=external_route
-                            subnet_name=t1subnet
+- name: "Attach tenant1's subnet to the external router"
+  quantum_router_interface:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    tenant_name: tenant1
+    router_name: external_route
+    subnet_name: t1subnet
 '''
 
 

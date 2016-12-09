@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cl_ports
@@ -48,7 +52,9 @@ attributes defined in the ports.conf file on Cumulus Linux
 
 ## Unganged port config using simple args
    - name: configure ports.conf setup
-     cl_ports: speed_4_by_10g="swp1, swp32" speed_40g="swp2-31"
+     cl_ports:
+        speed_4_by_10g: "swp1, swp32"
+        speed_40g: "swp2-31"
      notify: restart switchd
 
 ## Unganged port configuration on certain ports using complex args

@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: postgresql_db
@@ -95,16 +99,18 @@ author: "Ansible Core Team"
 
 EXAMPLES = '''
 # Create a new database with name "acme"
-- postgresql_db: name=acme
+- postgresql_db:
+    name: acme
 
 # Create a new database with name "acme" and specific encoding and locale
 # settings. If a template different from "template0" is specified, encoding
 # and locale settings must match those of the template.
-- postgresql_db: name=acme
-                 encoding='UTF-8'
-                 lc_collate='de_DE.UTF-8'
-                 lc_ctype='de_DE.UTF-8'
-                 template='template0'
+- postgresql_db:
+    name: acme
+    encoding: UTF-8
+    lc_collate: de_DE.UTF-8
+    lc_ctype: de_DE.UTF-8
+    template: template0
 '''
 
 try:

@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_ip_interface
@@ -57,10 +61,23 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure ipv4 address is configured on Ethernet1/32
-- nxos_ip_interface: interface=Ethernet1/32 transport=nxapi version=v4 state=present addr=20.20.20.20 mask=24
-# ensure ipv6 address is configured on Ethernet1/31
-- nxos_ip_interface: interface=Ethernet1/31 transport=cli version=v6 state=present addr=2001::db8:800:200c:cccb mask=64
+- name: Ensure ipv4 address is configured on Ethernet1/32
+  nxos_ip_interface:
+    interface: Ethernet1/32
+    transport: nxapi
+    version: v4
+    state: present
+    addr: 20.20.20.20
+    mask: 24
+
+- name: Ensure ipv6 address is configured on Ethernet1/31
+  nxos_ip_interface:
+    interface: Ethernet1/31
+    transport: cli
+    version: v6
+    state: present
+    addr: '2001::db8:800:200c:cccb'
+    mask: 64
 '''
 
 RETURN = '''
@@ -560,7 +577,7 @@ def get_config_ip_commands(delta, interface, existing, version):
     # loop used in the situation that just an IP address or just a
     # mask is changing, not both.
     for each in ['addr', 'mask']:
-        if each not in delta.keys():
+        if each not in delta:
             delta[each] = existing[each]
 
     if version == 'v4':

@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: postgresql_user
@@ -142,22 +146,41 @@ author: "Ansible Core Team"
 
 EXAMPLES = '''
 # Create django user and grant access to database and products table
-- postgresql_user: db=acme name=django password=ceec4eif7ya priv=CONNECT/products:ALL
+- postgresql_user:
+    db: acme
+    name: django
+    password: ceec4eif7ya
+    priv: "CONNECT/products:ALL"
 
 # Create rails user, grant privilege to create other databases and demote rails from super user status
-- postgresql_user: name=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER
+- postgresql_user:
+    name: rails
+    password: secret
+    role_attr_flags: CREATEDB,NOSUPERUSER
 
 # Remove test user privileges from acme
-- postgresql_user: db=acme name=test priv=ALL/products:ALL state=absent fail_on_user=no
+- postgresql_user:
+    db: acme
+    name: test
+    priv: "ALL/products:ALL"
+    state: absent
+    fail_on_user: no
 
 # Remove test user from test database and the cluster
-- postgresql_user: db=test name=test priv=ALL state=absent
+- postgresql_user:
+    db: test
+    name: test
+    priv: ALL
+    state: absent
 
 # Example privileges string format
 INSERT,UPDATE/table:SELECT/anothertable:ALL
 
 # Remove an existing user's password
-- postgresql_user: db=test user=test password=NULL
+- postgresql_user:
+    db: test
+    user: test
+    password: NULL
 '''
 
 import re
@@ -663,4 +686,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.database import *
-main()
+
+if __name__ == '__main__':
+    main()

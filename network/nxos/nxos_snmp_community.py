@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_snmp_community
@@ -62,9 +66,9 @@ EXAMPLES = '''
     community: TESTING7
     group: network-operator
     state: present
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

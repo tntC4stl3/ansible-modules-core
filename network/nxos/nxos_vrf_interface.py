@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_vrf_interface
@@ -52,10 +56,19 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure vrf ntc exists on Eth1/1
-- nxos_vrf_interface: vrf=ntc interface=Ethernet1/1 host=68.170.147.165 state=present
-# ensure ntc VRF does not exist on Eth1/1
-- nxos_vrf_interface: vrf=ntc interface=Ethernet1/1 host=68.170.147.165 state=absent
+- name: Ensure vrf ntc exists on Eth1/1
+  nxos_vrf_interface:
+    vrf: ntc
+    interface: Ethernet1/1
+    host: 68.170.147.165
+    state: present
+
+- name: Ensure ntc VRF does not exist on Eth1/1
+  nxos_vrf_interface:
+    vrf: ntc
+    interface: Ethernet1/1
+    host: 68.170.147.165
+    state: absent
 '''
 
 RETURN = '''

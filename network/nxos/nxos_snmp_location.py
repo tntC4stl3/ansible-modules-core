@@ -17,6 +17,10 @@
 #
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_snmp_location
@@ -46,17 +50,17 @@ EXAMPLES = '''
 - nxos_snmp_location:
     location: Test
     state: present
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # ensure snmp location is not configured
 - nxos_snmp_location:
     location: Test
     state: absent
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

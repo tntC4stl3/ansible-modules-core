@@ -21,6 +21,10 @@
 
 ######################################################################
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: docker
@@ -1303,7 +1307,7 @@ class DockerManager(object):
             for name, value in self.module.params.get('labels').iteritems():
                 expected_labels[name] = str(value)
 
-            if type(container['Config']['Labels']) is dict:
+            if isinstance(container['Config']['Labels'], dict):
                 actual_labels = container['Config']['Labels']
             else:
                 for container_label in container['Config']['Labels'] or []:

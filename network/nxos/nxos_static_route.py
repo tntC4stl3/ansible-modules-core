@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_static_route
@@ -321,7 +325,7 @@ def get_existing(module, prefix, warnings):
             group_route = match_route.groupdict()
 
             for key in key_map:
-                if key not in group_route.keys():
+                if key not in group_route:
                     group_route[key] = ''
             group_route['prefix'] = prefix
             group_route['vrf'] = module.params['vrf']

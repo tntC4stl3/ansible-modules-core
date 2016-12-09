@@ -8,6 +8,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 author:
@@ -59,7 +63,8 @@ notes:
 '''
 
 EXAMPLES = """
-- include_role: name=myrole
+- include_role:
+    name: myrole
 
 - name: Run tasks/other.yml instead of 'main'
   include_role:

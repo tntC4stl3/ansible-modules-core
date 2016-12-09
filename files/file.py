@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: file
@@ -88,22 +92,42 @@ options:
 
 EXAMPLES = '''
 # change file ownership, group and mode. When specifying mode using octal numbers, first digit should always be 0.
-- file: path=/etc/foo.conf owner=foo group=foo mode=0644
-- file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-- file: src=/tmp/{{ item.src }} dest={{ item.dest }} state=link
+- file:
+    path: /etc/foo.conf
+    owner: foo
+    group: foo
+    mode: 0644
+- file:
+    src: /file/to/link/to
+    dest: /path/to/symlink
+    owner: foo
+    group: foo
+    state: link
+- file:
+    src: '/tmp/{{ item.src }}'
+    dest: '{{ item.dest }}'
+    state: link
   with_items:
     - { src: 'x', dest: 'y' }
     - { src: 'z', dest: 'k' }
 
 # touch a file, using symbolic modes to set the permissions (equivalent to 0644)
-- file: path=/etc/foo.conf state=touch mode="u=rw,g=r,o=r"
+- file:
+    path: /etc/foo.conf
+    state: touch
+    mode: "u=rw,g=r,o=r"
 
 # touch the same file, but add/remove some permissions
-- file: path=/etc/foo.conf state=touch mode="u+rw,g-wx,o-rwx"
+- file:
+    path: /etc/foo.conf
+    state: touch
+    mode: "u+rw,g-wx,o-rwx"
 
 # create a directory if it doesn't exist
-- file: path=/etc/some_directory state=directory mode=0755
-
+- file:
+    path: /etc/some_directory
+    state: directory
+    mode: 0755
 '''
 
 import errno
@@ -217,6 +241,7 @@ def main():
             if follow and state == 'link':
                 # use the current target of the link as the source
                 src = to_native(os.path.realpath(b_path), errors='strict')
+                b_src = to_bytes(os.path.realpath(b_path), errors='strict')
             else:
                 module.fail_json(msg='src and dest are required for creating links')
 

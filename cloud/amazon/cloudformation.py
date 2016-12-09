@@ -21,6 +21,10 @@
 # - move create/update code out of main
 # - unit tests
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cloudformation
@@ -87,11 +91,18 @@ options:
     choices: [ json, yaml ]
     required: false
     version_added: "2.0"
+  role_arn:
+    description:
+    - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+    required: false
+    default: null
+    version_added: "2.3"
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
 - aws
 - ec2
+requires: [ botocore>=1.4.57 ]
 '''
 
 EXAMPLES = '''
@@ -136,9 +147,29 @@ EXAMPLES = '''
 # Use a template from a URL
 - name: launch ansible cloudformation example
   cloudformation:
-    stack_name="ansible-cloudformation" state=present
-    region=us-east-1 disable_rollback=true
-    template_url=https://s3.amazonaws.com/my-bucket/cloudformation.template
+    stack_name: "ansible-cloudformation"
+    state: present
+    region: us-east-1
+    disable_rollback: true
+    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
+  args:
+    template_parameters:
+      KeyName: jmartin
+      DiskType: ephemeral
+      InstanceType: m1.small
+      ClusterSize: 3
+    tags:
+      Stack: ansible-cloudformation
+
+# Use a template from a URL, and assume a role to execute
+- name: launch ansible cloudformation example with role assumption
+  cloudformation:
+    stack_name: "ansible-cloudformation"
+    state: present
+    region: us-east-1
+    disable_rollback: true
+    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
+    role_arn: 'arn:aws:iam::123456789012:role/cloudformation-iam-role'
   args:
     template_parameters:
       KeyName: jmartin
@@ -234,11 +265,11 @@ def get_stack_events(cfn, stack_name):
         return ret
 
     for e in events.get('StackEvents', []):
-        eventline = 'StackEvent {} {} {}'.format(e['ResourceType'], e['LogicalResourceId'], e['ResourceStatus'])
+        eventline = 'StackEvent {ResourceType} {LogicalResourceId} {ResourceStatus}'.format(**e)
         ret['events'].append(eventline)
 
         if e['ResourceStatus'].endswith('FAILED'):
-            failline = '{} {} {}: {}'.format(e['ResourceType'], e['LogicalResourceId'], e['ResourceStatus'], e['ResourceStatusReason'])
+            failline = '{ResourceType} {LogicalResourceId} {ResourceStatus}: {ResourceStatusReason}'.format(**e)
             ret['log'].append(failline)
 
     return ret
@@ -312,20 +343,6 @@ def get_stack_facts(cfn, stack_name):
 
     return stack_info
 
-IGNORE_CODE = 'Throttling'
-MAX_RETRIES=3
-def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
-    retries=0
-    while True:
-        try:
-            retval=function_ref(*argv, **kwargs)
-            return retval
-        except Exception as e:
-            # boto way of looking for retries
-            #if e.code != IGNORE_CODE or retries==MAX_RETRIES:
-            raise e
-        time.sleep(5 * (2**retries))
-        retries += 1
 
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
@@ -339,6 +356,7 @@ def main():
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
             template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+            role_arn=dict(default=None, required=False),
             tags=dict(default=None, type='dict')
         )
     )
@@ -381,6 +399,9 @@ def main():
     if module.params.get('template_url'):
         stack_params['TemplateURL'] = module.params['template_url']
 
+    if module.params.get('role_arn'):
+        stack_params['RoleARN'] = module.params['role_arn']
+
     update = False
     result = {}
 
@@ -420,8 +441,6 @@ def main():
                 result = dict(changed=False, output='Stack is already up-to-date.')
             else:
                 module.fail_json(msg=error_msg)
-                #return {'error': error_msg}
-                #module.fail_json(msg=error_msg)
         if not result: module.fail_json(msg="empty result")
 
     # check the status of the stack while we are creating/updating it.
@@ -439,7 +458,7 @@ def main():
         for res in reslist.get('StackResourceSummaries', []):
             stack_resources.append({
                 "logical_resource_id": res['LogicalResourceId'],
-                "physical_resource_id": res['PhysicalResourceId'],
+                "physical_resource_id": res.get('PhysicalResourceId', ''),
                 "resource_type": res['ResourceType'],
                 "last_updated_time": res['LastUpdatedTimestamp'],
                 "status": res['ResourceStatus'],

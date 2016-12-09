@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: ec2_elb
@@ -92,7 +96,7 @@ post_tasks:
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
       state: present
-    with_items: ec2_elbs
+    with_items: "{{ ec2_elbs }}"
 """
 
 import time

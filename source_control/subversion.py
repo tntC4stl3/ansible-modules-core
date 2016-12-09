@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: subversion
@@ -104,14 +108,22 @@ options:
 
 EXAMPLES = '''
 # Checkout subversion repository to specified folder.
-- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
+- subversion:
+    repo: svn+ssh://an.example.org/path/to/repo
+    dest: /src/checkout
 
 # Export subversion directory to folder
-- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/export export=True
+- subversion:
+    repo: svn+ssh://an.example.org/path/to/repo
+    dest: /src/export
 
 # Example just get information about the repository whether or not it has
 # already been cloned locally.
-- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/srv/checkout checkout=no update=no
+- subversion:
+    repo: svn+ssh://an.example.org/path/to/repo
+    dest: /srv/checkout
+    checkout: no
+    update: no
 '''
 
 import re
@@ -296,4 +308,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()

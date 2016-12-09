@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_vpc_interface
@@ -501,7 +505,7 @@ def main():
     if vpc:
         mapping = get_existing_portchannel_to_vpc_mappings(module)
 
-        if vpc in mapping.keys() and portchannel != mapping[vpc].strip('Po'):
+        if vpc in mapping and portchannel != mapping[vpc].strip('Po'):
             module.fail_json(msg="This vpc is already configured on "
                                  "another portchannel.  Remove it first "
                                  "before trying to assign it here. ",

@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_interface
@@ -85,23 +89,47 @@ options:
 '''
 
 EXAMPLES = '''
-# Ensure an interface is a Layer 3 port and that it has the proper description
-- nxos_interface: interface=Ethernet1/1 description='Configured by Ansible' mode=layer3 host=68.170.147.165
-# Admin down an interface
-- nxos_interface: interface=Ethernet2/1 host=68.170.147.165 admin_state=down
-# Remove all loopback interfaces
-- nxos_interface: interface=loopback state=absent host=68.170.147.165
-# Remove all logical interfaces
-- nxos_interface: interface_type={{ item }} state=absent host={{ inventory_hostname }}
+- name Ensure an interface is a Layer 3 port and that it has the proper description
+  nxos_interface:
+    interface: Ethernet1/1
+    description: 'Configured by Ansible'
+    mode: layer3
+    host: 68.170.147.165
+
+- name Admin down an interface
+  nxos_interface:
+    interface: Ethernet2/1
+    host: 68.170.147.165
+    admin_state: down
+
+- name Remove all loopback interfaces
+  nxos_interface:
+    interface: loopback
+    state: absent
+    host: 68.170.147.165
+
+- name Remove all logical interfaces
+  nxos_interface:
+    interface_type: "{{ item }} "
+    state: absent
+    host: "{{ inventory_hostname }}"
+
   with_items:
     - loopback
     - portchannel
     - svi
     - nve
-# Admin up all ethernet interfaces
-- nxos_interface: interface=ethernet host=68.170.147.165 admin_state=up
-# Admin down ALL interfaces (physical and logical)
-- nxos_interface: interface=all host=68.170.147.165 admin_state=down
+- name Admin up all ethernet interfaces
+  nxos_interface:
+    interface: ethernet
+    host: 68.170.147.165
+    admin_state: up
+
+- name Admin down ALL interfaces (physical and logical)
+  nxos_interface:
+    interface: all
+    host: 68.170.147.165
+    admin_state: down
 '''
 RETURN = '''
 proposed:

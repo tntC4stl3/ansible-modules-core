@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ec2
@@ -29,6 +33,13 @@ options:
     required: false
     default: null
     aliases: ['keypair']
+  id:        
+    version_added: "1.1"
+    description:        
+      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on. For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).        
+    required: false        
+    default: null        
+    aliases: []        
   group:
     description:
       - security group (or list of groups) to use with the instance
@@ -427,12 +438,21 @@ EXAMPLES = '''
          vpc_subnet_id: subnet-29e63245
          assign_public_ip: yes
       register: ec2
+
     - name: Add new instance to host group
-      add_host: hostname={{ item.public_ip }} groupname=launched
-      with_items: '{{ec2.instances}}'
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: launched
+      with_items: "{{ ec2.instances }}"
+
     - name: Wait for SSH to come up
-      wait_for: host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
-      with_items: '{{ec2.instances}}'
+      wait_for:
+        host: "{{ item.public_dns_name }}"
+        port: 22
+        delay: 60
+        timeout: 320
+        state: started
+      with_items: "{{ ec2.instances }}"
 
 - name: Configure instance(s)
   hosts: launched
@@ -580,6 +600,8 @@ EXAMPLES = '''
 
 import time
 from ast import literal_eval
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import get_function_code
 
 try:
     import boto.ec2
@@ -607,8 +629,8 @@ def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
 
 def _set_none_to_blank(dictionary):
     result = dictionary
-    for k in result.iterkeys():
-        if type(result[k]) == dict:
+    for k in result:
+        if isinstance(result[k], dict):
             result[k] = _set_none_to_blank(result[k])
         elif not result[k]:
             result[k] = ""
@@ -622,29 +644,29 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
 
     if tags is not None:
 
-        if type(tags) is str:
+        if isinstance(tags, str):
             try:
                 tags = literal_eval(tags)
             except:
                 pass
 
         # if string, we only care that a tag of that name exists
-        if type(tags) is str:
+        if isinstance(tags, str):
             filters.update({"tag-key": tags})
 
         # if list, append each item to filters
-        if type(tags) is list:
+        if isinstance(tags, list):
             for x in tags:
-                if type(x) is dict:
+                if isinstance(x, dict):
                     x = _set_none_to_blank(x)
-                    filters.update(dict(("tag:"+tn, tv) for (tn,tv) in x.iteritems()))
+                    filters.update(dict(("tag:"+tn, tv) for (tn,tv) in iteritems(x)))
                 else:
                     filters.update({"tag-key": x})
 
         # if dict, add the key and value to the filter
-        if type(tags) is dict:
+        if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
-            filters.update(dict(("tag:"+tn, tv) for (tn,tv) in tags.iteritems()))
+            filters.update(dict(("tag:"+tn, tv) for (tn,tv) in iteritems(tags)))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -744,7 +766,7 @@ def boto_supports_profile_name_arg(ec2):
         True if Boto library accept instance_profile_name argument, else false
     """
     run_instances_method = getattr(ec2, 'run_instances')
-    return 'instance_profile_name' in run_instances_method.func_code.co_varnames
+    return 'instance_profile_name' in get_function_code(run_instances_method).co_varnames
 
 def create_block_device(module, ec2, volume):
     # Not aware of a way to determine this programatically
@@ -794,7 +816,7 @@ def boto_supports_param_in_spot_request(ec2, param):
         True if boto library has the named param as an argument on the request_spot_instances method, else False
     """
     method = getattr(ec2, 'request_spot_instances')
-    return param in method.func_code.co_varnames
+    return param in get_function_code(method).co_varnames
 
 def await_spot_requests(module, ec2, spot_requests, count):
     """
@@ -902,7 +924,7 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
-        if type(inst) is not dict:
+        if not isinstance(inst, dict):
             inst = get_instance_info(inst)
         all_instances.append(inst)
 
@@ -1606,4 +1628,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

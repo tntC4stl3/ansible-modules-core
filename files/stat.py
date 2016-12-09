@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: stat
@@ -53,25 +57,35 @@ options:
     default: sha1
     aliases: [ 'checksum_algo', 'checksum' ]
     version_added: "2.0"
-  mime:
+  get_mime:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
       - This will add both `mime_type` and 'charset' fields to the return, if possible.
+      - In 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'
     required: false
     choices: [ Yes, No ]
-    default: No
+    default: Yes
     version_added: "2.1"
-    aliases: [ 'mime_type', 'mime-type' ]
+    aliases: [ 'mime', 'mime_type', 'mime-type' ]
+  get_attributes:
+    description:
+      - Get file attributes using lsattr tool if present.
+    required: false
+    default: True
+    version_added: "2.3"
+    aliases: [ 'attributes', 'attr' ]
 author: "Bruce Pennypacker (@bpennypacker)"
 '''
 
 EXAMPLES = '''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
-- stat: path=/etc/foo.conf
+- stat:
+    path: /etc/foo.conf
   register: st
-- fail: msg="Whoops! file ownership has changed"
+- fail:
+    msg: "Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
 # Determine if a path exists and is a symlink. Note that if the path does
@@ -79,35 +93,50 @@ EXAMPLES = '''
 # therefore, we must test whether it is defined.
 # Run this to understand the structure, the skipped ones do not pass the
 # check performed by 'when'
-- stat: path=/path/to/something
+- stat:
+    path: /path/to/something
   register: sym
-- debug: msg="islnk isn't defined (path doesn't exist)"
+
+- debug:
+    msg: "islnk isn't defined (path doesn't exist)"
   when: sym.stat.islnk is not defined
-- debug: msg="islnk is defined (path must exist)"
+
+- debug:
+    msg: "islnk is defined (path must exist)"
   when: sym.stat.islnk is defined
-- debug: msg="Path exists and is a symlink"
+
+- debug:
+    msg: "Path exists and is a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk
-- debug: msg="Path exists and isn't a symlink"
+
+- debug:
+    msg: "Path exists and isn't a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk == False
 
 
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
-- stat: path=/path/to/something
+- stat:
+    path: /path/to/something
   register: p
-- debug: msg="Path exists and is a directory"
+- debug:
+    msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
 # Don't do md5 checksum
-- stat: path=/path/to/myhugefile get_md5=no
+- stat:
+    path: /path/to/myhugefile
+    get_md5: no
 
 # Use sha256 to calculate checksum
-- stat: path=/path/to/something checksum_algorithm=sha256
+- stat:
+    path: /path/to/something
+    checksum_algorithm: sha256
 '''
 
 RETURN = '''
 stat:
-    description: dictionary containing all the stat data
+    description: dictionary containing all the stat data, some platforms might add additional fields
     returned: success
     type: dictionary
     contains:
@@ -307,16 +336,25 @@ stat:
             returned: success, path exists and user can read the path
             type: boolean
             sample: False
+            version_added: 2.2
         writeable:
             description: Tells you if the invoking user has the right to write the path
             returned: success, path exists and user can write the path
             type: boolean
             sample: False
+            version_added: 2.2
         executable:
             description: Tells you if the invoking user has the execute the path
             returned: success, path exists and user can execute the path
             type: boolean
             sample: False
+            version_added: 2.2
+        attributes:
+            description: list of file attributes
+            returned: success, path exists and user can execute the path
+            type: boolean
+            sample: [ immutable, extent ]
+            version_added: 2.3
 '''
 
 import errno
@@ -326,13 +364,11 @@ import pwd
 import stat
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, format_attributes
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
 
-
-def format_output(module, path, st, follow, get_md5, get_checksum,
-                  checksum_algorithm, mimetype=None, charset=None):
+def format_output(module, path, st):
     mode = st.st_mode
 
     # back to ansible
@@ -367,37 +403,30 @@ def format_output(module, path, st, follow, get_md5, get_checksum,
         xoth=bool(mode & stat.S_IXOTH),
         isuid=bool(mode & stat.S_ISUID),
         isgid=bool(mode & stat.S_ISGID),
-        readable=os.access(path, os.R_OK),
-        writeable=os.access(path, os.W_OK),
-        executable=os.access(path, os.X_OK),
     )
 
-    if stat.S_ISLNK(mode):
-        output['lnk_source'] = os.path.realpath(path)
+    # Platform dependant flags:
+    for other in [
+            # Some Linux
+            ('st_blocks','blocks'),
+            ('st_blksize', 'block_size'),
+            ('st_rdev','device_type'),
+            ('st_flags', 'flags'),
+            # Some Berkley based
+            ('st_gen', 'generation'),
+            ('st_birthtime', 'birthtime'),
+            # RISCOS
+            ('st_ftype', 'file_type'),
+            ('st_attrs', 'attrs'),
+            ('st_obtype', 'object_type'),
+            # OS X
+            ('st_rsize', 'real_size'),
+            ('st_creator', 'creator'),
+            ('st_type', 'file_type'),
+        ]:
+        if hasattr(st, other[0]):
+            output[other[1]] = getattr(st, other[0])
 
-    if stat.S_ISREG(mode) and get_md5 and os.access(path, os.R_OK):
-        # Will fail on FIPS-140 compliant systems
-        try:
-            output['md5'] = module.md5(path)
-        except ValueError:
-            output['md5'] = None
-
-    if stat.S_ISREG(mode) and get_checksum and os.access(path, os.R_OK):
-        output['checksum'] = module.digest_from_file(path, checksum_algorithm)
-
-    try:
-        pw = pwd.getpwuid(st.st_uid)
-
-        output['pw_name'] = pw.pw_name
-
-        grp_info = grp.getgrgid(st.st_gid)
-        output['gr_name'] = grp_info.gr_name
-    except:
-        pass
-
-    if not (mimetype is None and charset is None):
-        output['mime_type'] = mimetype
-        output['charset'] = charset
 
     return output
 
@@ -409,10 +438,11 @@ def main():
             follow=dict(default='no', type='bool'),
             get_md5=dict(default='yes', type='bool'),
             get_checksum=dict(default='yes', type='bool'),
+            get_mime=dict(default=True, type='bool', aliases=['mime', 'mime_type', 'mime-type']),
+            get_attributes=dict(default=True, type='bool', aliases=['attributes', 'attr']),
             checksum_algorithm=dict(default='sha1', type='str',
                                     choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum_algo', 'checksum']),
-            mime=dict(default=False, type='bool', aliases=['mime_type', 'mime-type']),
         ),
         supports_check_mode=True
     )
@@ -420,11 +450,13 @@ def main():
     path = module.params.get('path')
     b_path = to_bytes(path, errors='surrogate_or_strict')
     follow = module.params.get('follow')
-    get_mime = module.params.get('mime')
+    get_mime = module.params.get('get_mime')
+    get_attr = module.params.get('get_attributes')
     get_md5 = module.params.get('get_md5')
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
 
+    # main stat data
     try:
         if follow:
             st = os.stat(b_path)
@@ -438,25 +470,65 @@ def main():
 
         module.fail_json(msg=e.strerror)
 
-    mimetype = None
-    charset = None
+    # process base results
+    output = format_output(module, path, st)
+
+    # resolved permissions
+    for perm in [('readable', os.R_OK), ('writeable', os.W_OK), ('executable', os.X_OK)]:
+        output[perm[0]] = os.access(path, perm[1])
+
+    # symlink info
+    if output.get('islnk'):
+        output['lnk_source'] = os.path.realpath(path)
+
+    try: # user data
+        pw = pwd.getpwuid(st.st_uid)
+        output['pw_name'] = pw.pw_name
+    except:
+        pass
+
+    try: # group data
+        grp_info = grp.getgrgid(st.st_gid)
+        output['gr_name'] = grp_info.gr_name
+    except:
+        pass
+
+    # checksums
+    if output.get('isreg') and output.get('readable'):
+        if get_md5:
+            # Will fail on FIPS-140 compliant systems
+            try:
+                output['md5'] = module.md5(path)
+            except ValueError:
+                output['md5'] = None
+
+        if get_checksum:
+            output['checksum'] = module.digest_from_file(path, checksum_algorithm)
+
+    # try to get mime data if requested
     if get_mime:
-        mimetype = 'unknown'
-        charset = 'unknown'
+        output['mimetype'] = output['charset'] = 'unknown'
+        mimecmd = module.get_bin_path('file')
+        if mimecmd:
+            mimecmd = [mimecmd, '-i', path]
+            try:
+                rc, out, err = module.run_command(mimecmd)
+                if rc == 0:
+                    mimetype, charset = out.split(':')[1].split(';')
+                    output['mimetype'] = mimetype.strip()
+                    output['charset'] = charset.split('=')[1].strip()
+            except:
+                pass
 
-        filecmd = [module.get_bin_path('file', True), '-i', path]
-        try:
-            rc, out, err = module.run_command(filecmd)
-            if rc == 0:
-                mimetype, charset = out.split(':')[1].split(';')
-                mimetype = mimetype.strip()
-                charset = charset.split('=')[1].strip()
-        except:
-            pass
-
-    output = format_output(module, path, st, follow, get_md5, get_checksum,
-                           checksum_algorithm, mimetype=mimetype,
-                           charset=charset)
+    # try to get attr data
+    if get_attr:
+        output['version'] = None
+        output['attributes'] = []
+        output['attr_flags'] = ''
+        out = module.get_file_attributes(path)
+        for x in ('version', 'attributes', 'attr_flags'):
+            if x in out:
+                output[x] = out[x]
 
     module.exit_json(changed=False, stat=output)
 

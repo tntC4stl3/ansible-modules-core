@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_mtu
@@ -57,33 +61,33 @@ EXAMPLES = '''
 # Ensure system mtu is 9126
 - nxos_mtu:
     sysmtu: 9216
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # Config mtu on Eth1/1 (routed interface)
 - nxos_mtu:
     interface: Ethernet1/1
     mtu: 1600
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # Config mtu on Eth1/3 (switched interface)
 - nxos_mtu:
     interface: Ethernet1/3
     mtu: 9216
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # Unconfigure mtu on a given interface
 - nxos_mtu:
     interface: Ethernet1/3
     mtu: 9216
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
     state: absent
 '''
 

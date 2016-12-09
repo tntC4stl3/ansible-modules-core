@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_vrf
@@ -76,8 +80,12 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure ntc VRF exists on switch
-- nxos_vrf: vrf=ntc username="{{ un }}" password="{{ pwd }}" host="{{ inventory_hostname }}"
+- name: Ensure ntc VRF exists on switch
+  nxos_vrf:
+    vrf: ntc
+    username: "{{ un }}"
+    password: "{{ pwd }}"
+    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''

@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: pause
@@ -47,11 +51,13 @@ notes:
 
 EXAMPLES = '''
 # Pause for 5 minutes to build app cache.
-- pause: minutes=5
+- pause:
+    minutes: 5
 
 # Pause until you can verify updates to an application were successful.
 - pause:
 
 # A helpful reminder of what to look out for post-update.
-- pause: prompt="Make sure org.foo.FooOverload exception is not present"
+- pause:
+    prompt: "Make sure org.foo.FooOverload exception is not present"
 '''

@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: service
@@ -74,29 +78,51 @@ options:
         description:
         - Additional arguments provided on the command line
         aliases: [ 'args' ]
+    use:
+        description:
+            - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
+            - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        default: 'auto'
+        version_added: 2.2
 '''
 
 EXAMPLES = '''
 # Example action to start service httpd, if not running
-- service: name=httpd state=started
+- service:
+    name: httpd
+    state: started
 
 # Example action to stop service httpd, if running
-- service: name=httpd state=stopped
+- service:
+    name: httpd
+    state: stopped
 
 # Example action to restart service httpd, in all cases
-- service: name=httpd state=restarted
+- service:
+    name: httpd
+    state: restarted
 
 # Example action to reload service httpd, in all cases
-- service: name=httpd state=reloaded
+- service:
+    name: httpd
+    state: reloaded
 
 # Example action to enable service httpd, and not touch the running state
-- service: name=httpd enabled=yes
+- service:
+    name: httpd
+    enabled: yes
 
 # Example action to start service foo, based on running process /usr/bin/foo
-- service: name=foo pattern=/usr/bin/foo state=started
+- service:
+    name: foo
+    pattern: /usr/bin/foo
+    state: started
 
 # Example action to restart network service for interface eth0
-- service: name=network state=restarted args=eth0
+- service:
+    name: network
+    state: restarted
+    args: eth0
 
 '''
 
@@ -109,6 +135,7 @@ import select
 import time
 import string
 import glob
+from ansible.module_utils.service import fail_if_missing
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -471,7 +498,7 @@ class LinuxService(Service):
                 self.enable_cmd = location['chkconfig']
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg="no service or tool found for: %s" % self.name)
+            fail_if_missing(self.module, False, self.name, msg='host')
 
         # If no service control tool selected yet, try to see if 'service' is available
         if self.svc_cmd is None and location.get('service', False):
@@ -988,7 +1015,7 @@ class FreeBsdService(Service):
         # and hope for the best.
         for rcvar in rcvars:
             if '=' in rcvar:
-                self.rcconf_key = rcvar.split('=')[0]
+                self.rcconf_key, default_rcconf_value = rcvar.split('=', 1)
                 break
 
         if self.rcconf_key is None:
@@ -997,8 +1024,10 @@ class FreeBsdService(Service):
         if self.sysrc_cmd: # FreeBSD >= 9.2
 
             rc, current_rcconf_value, stderr = self.execute_command("%s -n %s" % (self.sysrc_cmd, self.rcconf_key))
+            # it can happen that rcvar is not set (case of a system coming from the ports collection)
+            # so we will fallback on the default
             if rc != 0:
-                self.module.fail_json(msg="unable to get current rcvar value", stdout=stdout, stderr=stderr)
+                current_rcconf_value = default_rcconf_value
 
             if current_rcconf_value.strip().upper() != self.rcconf_value:
 
@@ -1365,9 +1394,9 @@ class SunOSService(Service):
         elif self.action == 'stop':
             subcmd = "disable -st"
         elif self.action == 'reload':
-            subcmd = "refresh"
+            subcmd = "refresh -s"
         elif self.action == 'restart' and status == 'online':
-            subcmd = "restart"
+            subcmd = "restart -s"
         elif self.action == 'restart' and status != 'online':
             subcmd = "enable -rst"
 
@@ -1543,4 +1572,5 @@ def main():
 
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

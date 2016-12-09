@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 module: meta
 short_description: Execute Ansible 'actions'
@@ -47,19 +51,28 @@ author:
 
 EXAMPLES = '''
 # force all notified handlers to run at this point, not waiting for normal sync points
-- template: src=new.j2 dest=/etc/config.txt
+- template:
+    src: new.j2
+    dest: /etc/config.txt
   notify: myhandler
 - meta: flush_handlers
 
 # reload inventory, useful with dynamic inventories when play makes changes to the existing hosts
-- cloud_guest: name=newhost state=present # this is fake module
-- meta: refresh_inventory
+- cloud_guest:            # this is fake module
+    name: newhost
+    state: present
 
-# clear gathered facts from all currently targeted hosts
-- meta: clear_facts
+- name: Refresh inventory to ensure new instaces exist in inventory
+  meta: refresh_inventory
+
+- name: Clear gathered facts from all currently targeted hosts
+  meta: clear_facts
 
 # bring host back to play after failure
-- copy: src=file dest=/etc/file
+- copy:
+    src: file
+    dest: /etc/file
   remote_user: imightnothavepermission
+
 - meta: clear_host_errors
 '''

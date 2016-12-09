@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
 module: sros_config
@@ -186,7 +190,7 @@ vars:
 
 - name: load config from file
     sros_config:
-      src: {{ inventory_hostname }}.cfg
+      src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes
 """

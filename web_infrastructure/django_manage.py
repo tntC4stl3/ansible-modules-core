@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: django_manage
@@ -99,24 +103,34 @@ author: "Scott Anderson (@tastychutney)"
 
 EXAMPLES = """
 # Run cleanup on the application installed in 'django_dir'.
-- django_manage: command=cleanup app_path={{ django_dir }}
+- django_manage:
+    command: cleanup
+    app_path: "{{ django_dir }}"
 
 # Load the initial_data fixture into the application
-- django_manage: command=loaddata app_path={{ django_dir }} fixtures={{ initial_data }}
+- django_manage:
+    command: loaddata
+    app_path: "{{ django_dir }}"
+    fixtures: "{{ initial_data }}"
 
 # Run syncdb on the application
-- django_manage: >
-      command=syncdb
-      app_path={{ django_dir }}
-      settings={{ settings_app_name }}
-      pythonpath={{ settings_dir }}
-      virtualenv={{ virtualenv_dir }}
+- django_manage:
+    command: syncdb
+    app_path: "{{ django_dir }}"
+    settings: "{{ settings_app_name }}"
+    pythonpath: "{{ settings_dir }}"
+    virtualenv: "{{ virtualenv_dir }}"
 
 # Run the SmokeTest test case from the main app. Useful for testing deploys.
-- django_manage: command=test app_path={{ django_dir }} apps=main.SmokeTest
+- django_manage:
+    command: test
+    app_path: "{{ django_dir }}"
+    apps: main.SmokeTest
 
 # Create an initial superuser.
-- django_manage: command="createsuperuser --noinput --username=admin --email=admin@example.com" app_path={{ django_dir }}
+- django_manage:
+    command: "createsuperuser --noinput --username=admin --email=admin@example.com"
+    app_path: "{{ django_dir }}"
 """
 
 
@@ -284,4 +298,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

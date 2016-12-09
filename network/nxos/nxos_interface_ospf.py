@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_interface_ospf
@@ -118,7 +122,7 @@ EXAMPLES = '''
     interface: ethernet1/32
     ospf: 1
     area: 1
-    cost=default
+    cost: default
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"

@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: acl
@@ -97,19 +101,38 @@ notes:
 
 EXAMPLES = '''
 # Grant user Joe read access to a file
-- acl: name=/etc/foo.conf entity=joe etype=user permissions="r" state=present
+- acl:
+    name: /etc/foo.conf
+    entity: joe
+    etype: user
+    permissions: r
+    state: present
 
 # Removes the acl for Joe on a specific file
-- acl: name=/etc/foo.conf entity=joe etype=user state=absent
+- acl:
+    name: /etc/foo.conf
+    entity: joe
+    etype: user
+    state: absent
 
 # Sets default acl for joe on foo.d
-- acl: name=/etc/foo.d entity=joe etype=user permissions=rw default=yes state=present
+- acl:
+    name: /etc/foo.d
+    entity: joe
+    etype: user
+    permissions: rw
+    default: yes
+    state: present
 
 # Same as previous but using entry shorthand
-- acl: name=/etc/foo.d entry="default:user:joe:rw-" state=present
+- acl:
+    name: /etc/foo.d
+    entry: "default:user:joe:rw-"
+    state: present
 
 # Obtain the acl for a specific file
-- acl: name=/etc/foo.conf
+- acl:
+    name: /etc/foo.conf
   register: acl_info
 '''
 
@@ -349,4 +372,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

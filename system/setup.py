@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: setup
@@ -119,7 +123,7 @@ def main():
             gather_subset=dict(default=["all"], required=False, type='list'),
             gather_timeout=dict(default=10, required=False, type='int'),
             filter=dict(default="*", required=False),
-            fact_path=dict(default='/etc/ansible/facts.d', required=False),
+            fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
         ),
         supports_check_mode = True,
     )

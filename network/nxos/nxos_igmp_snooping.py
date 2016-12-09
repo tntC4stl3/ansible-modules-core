@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nxos_igmp_snooping
@@ -86,8 +90,8 @@ EXAMPLES = '''
    report_supp: true
    v3_report_supp: true
    host: "{{ inventory_hostname }}"
-   username: {{ un }}
-   password: {{ pwd }}
+   username: "{{ un }}"
+   password: "{{ pwd }}"
 '''
 
 RETURN = '''

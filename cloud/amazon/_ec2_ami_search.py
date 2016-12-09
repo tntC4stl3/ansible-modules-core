@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ec2_ami_search
@@ -74,10 +78,18 @@ EXAMPLES = '''
   connection: local
   tasks:
   - name: Get the Ubuntu precise AMI
-    ec2_ami_search: distro=ubuntu release=precise region=us-west-1 store=instance-store
+    ec2_ami_search:
+      distro: ubuntu
+      release: precise
+      region: us-west-1
+      store: instance-store
     register: ubuntu_image
+
   - name: Start the EC2 instance
-    ec2: image={{ ubuntu_image.ami }} instance_type=m1.small key_name=mykey
+    ec2:
+      image: "{{ ubuntu_image.ami }}"
+      instance_type: m1.small
+      key_name: mykey
 '''
 
 import csv

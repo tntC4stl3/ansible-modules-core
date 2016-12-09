@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 author: "Dag Wieers (@dagwieers)"
@@ -42,7 +46,9 @@ notes:
 
 EXAMPLES = '''
 # Example setting host facts using key=value pairs, note that this always creates strings or booleans
-- set_fact: one_fact="something" other_fact="{{ local_var }}"
+- set_fact:
+    one_fact: "something"
+    other_fact: "{{ local_var }}"
 
 # Example setting host facts using complex arguments
 - set_fact:
